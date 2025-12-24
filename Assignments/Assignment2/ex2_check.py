@@ -1,6 +1,7 @@
 import ext_plant
 import ex2
 import numpy as np
+import time
 
 
 
@@ -80,7 +81,8 @@ def main():
     n_runs = 30
     # Fix horizon
     total_reward = 0.0
-    problems = [problem_pdf,problem_pdf2,problem_pdf3]
+    total_time = 0
+    problems = [problem_pdf]
     for problem in problems:
         for seed in range(n_runs):
             # Set a different random seed each run
