@@ -91,14 +91,24 @@ def main():
             # Create a fresh game for this run
             game = ext_plant.create_pressure_plate_game((problem, debug_mode))
 
+             # Start timer
+            start_time = time.time()
+
             # Solve and accumulate reward
             run_reward = solve(game)
             total_reward += run_reward
 
-            print(f"Run {seed}: reward = {run_reward}")
+            # Stop timer and accumulate
+            end_time = time.time()
+            duration = end_time - start_time
+            total_time += duration
+
+            print(f"Run {seed}: reward = {run_reward}, time = {duration:.4f}s")
 
         avg_reward = total_reward / n_runs
+        avg_time = total_time / n_runs
         print(f"\nAverage reward over {n_runs} runs: {avg_reward}")
+        print(f"Average time over {n_runs} runs: {avg_time:.4f}s")
 
 
 
