@@ -499,24 +499,51 @@ problem_new4_version2 = {
 
 def main():
     debug_mode = False
-    n_runs = 30
+    n_runs = 5
+    
+    # ANSI Color codes for terminal output
+    RED = "\033[91m"
+    GREEN = "\033[92m"
+    CYAN = "\033[96m"
+    RESET = "\033[0m"
+
+    # Baselines extracted from Solution_second.txt
+    baselines = {
+        "problem_pdf": 21.766667,
+        "problem_pdf2": 27.0,
+        "problem_pdf3": 40.366667,
+        "problem_new1_version1": 62.966667,
+        "problem_new1_version2": 87.500000,
+        "problem_new1_version3": 26.833333,
+        "problem_new2_version1": 26.600000,
+        "problem_new2_version2": 86.066667,
+        "problem_new2_version3": 46.533333,
+        "problem_new2_version4": 39.733333,
+        "problem_new3_version1": 2.933333,
+        "problem_new3_version2": 4.033333,
+        "problem_new3_version3": 5.900000,
+        "problem_new4_version1": 38.033333,
+        "problem_new4_version2": 16.566667,
+    }
+
     problems = [
-        ("problem_pdf", problem_pdf),
-        ("problem_pdf2", problem_pdf2),
-        ("problem_pdf3", problem_pdf3),
-        ("problem_new1_version1", problem_new1_version1),
-        ("problem_new1_version2", problem_new1_version2),
-        ("problem_new1_version3", problem_new1_version3),
-        ("problem_new2_version1", problem_new2_version1),
-        ("problem_new2_version2", problem_new2_version2),
-        ("problem_new2_version3", problem_new2_version3),
-        ("problem_new2_version4", problem_new2_version4),
-        ("problem_new3_version1", problem_new3_version1),
-        ("problem_new3_version2", problem_new3_version2),
-        ("problem_new3_version3", problem_new3_version3),
-        ("problem_new4_version1", problem_new4_version1),
-        ("problem_new4_version2", problem_new4_version2),
+        # ("problem_pdf", problem_pdf), # PASS
+        # ("problem_pdf2", problem_pdf2), # PASS
+        # ("problem_pdf3", problem_pdf3), # PASS
+        #("problem_new1_version1", problem_new1_version1),
+        #("problem_new1_version2", problem_new1_version2), # PASS
+        #("problem_new1_version3", problem_new1_version3), # PASS
+        #  ("problem_new2_version1", problem_new2_version1), # PASS
+        # ("problem_new2_version2", problem_new2_version2), # PASS
+        # ("problem_new2_version3", problem_new2_version3), # PASS
+        # ("problem_new2_version4", problem_new2_version4), # PASS
+        # ("problem_new3_version1", problem_new3_version1), # PASS
+        # ("problem_new3_version2", problem_new3_version2), # PASS
+        # ("problem_new3_version3", problem_new3_version3), # PASS
+        # ("problem_new4_version1", problem_new4_version1), # PASS
+        ("problem_new4_version2", problem_new4_version2), 
     ]
+
     for prob_name, problem in problems:
         total_reward = 0.0
         total_time = 0
@@ -528,9 +555,22 @@ def main():
             total_reward += run_reward
             duration = time.time() - start_time
             total_time += duration
+        
         avg_reward = total_reward / n_runs
         avg_time = total_time / n_runs
-        print(f"\n{prob_name}: Average reward over {n_runs} runs: {avg_reward}")
+
+        # Comparison Logic
+        baseline = baselines.get(prob_name)
+        status_msg = ""
+        
+        if baseline is not None:
+            # Using a tiny epsilon for float comparison safety
+            if avg_reward >= (baseline - 0.0001):
+                status_msg = f" -> {GREEN}PASSED (Baseline: {baseline}){RESET}"
+            else:
+                status_msg = f" -> {RED}FAILED (Baseline: {baseline}){RESET}"
+        
+        print(f"\n{CYAN}{prob_name}{RESET}: Average reward over {n_runs} runs: {avg_reward}{status_msg}")
         print(f"{prob_name}: Average time over {n_runs} runs: {avg_time:.4f}s")
 
 

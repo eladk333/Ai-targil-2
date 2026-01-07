@@ -1,0 +1,525 @@
+import tkinter as tk
+from tkinter import messagebox, ttk
+
+# --- PRESET PROBLEMS DATA (Copied from ex2_check.py) ---
+PRESET_PROBLEMS = {
+    "problem_pdf": {
+        "Size":   (3, 3),
+        "Walls":  {(0, 1), (2, 1)},
+        "Taps":   {(1, 1): 6},
+        "Plants": {(2, 0): 2, (0, 2): 3},
+        "Robots": {10: (1, 0, 0, 2), 11: (1, 2, 0, 2)},
+        "robot_chosen_action_prob":{10: 0.95, 11: 0.9},
+        "goal_reward": 10,
+        "plants_reward": {(0, 2): [1,2,3,4], (2, 0): [1,2,3,4]},
+        "seed": 45,
+        "horizon": 30,
+    },
+    "problem_pdf2": {
+        "Size":   (3, 3),
+        "Walls":  {(0, 1), (2, 1)},
+        "Taps":   {(1, 1): 6},
+        "Plants": {(2, 0): 2, (0, 2): 3},
+        "Robots": {10: (1, 0, 0, 2), 11: (1, 2, 0, 2)},
+        "robot_chosen_action_prob":{10: 0.9, 11: 0.8},
+        "goal_reward": 12,
+        "plants_reward": {(0, 2): [1,3,5,7], (2, 0): [1,2,3,4]},
+        "seed": 45,
+        "horizon": 35,
+    },
+    "problem_pdf3": {
+        "Size":   (3, 3),
+        "Walls":  {(0, 1), (2, 1)},
+        "Taps":   {(1, 1): 6},
+        "Plants": {(2, 0): 2, (0, 2): 3},
+        "Robots": {10: (1, 0, 0, 2), 11: (1, 2, 0, 2)},
+        "robot_chosen_action_prob":{10: 0.7, 11: 0.6},
+        "goal_reward": 30,
+        "plants_reward": {(0, 2): [1,2,3,4], (2, 0): [10,11,12,13]},
+        "seed": 45,
+        "horizon": 30,
+    },
+    "problem_new1_version1": {
+        "Size":  (5, 6),
+        "Walls": {(1, 2), (1, 3), (3, 2), (3, 3)},
+        "Taps": {(2, 2): 12},
+        "Plants": {(0, 1): 3, (4, 5): 6},
+        "Robots": {10: (2, 1, 0, 6), 11: (2, 4, 0, 3)},
+        "robot_chosen_action_prob":{10: 0.9, 11: 0.95},
+        "goal_reward": 30,
+        "plants_reward": {(4, 5): [1,2,3,4], (0, 1): [10,11,12,13]},
+        "seed": 45,
+        "horizon": 30,
+    },
+    "problem_new1_version2": {
+        "Size":  (5, 6),
+        "Walls": {(1, 2), (1, 3), (3, 2), (3, 3)},
+        "Taps": {(2, 2): 12},
+        "Plants": {(0, 1): 3, (4, 5): 6},
+        "Robots": {10: (2, 1, 0, 6), 11: (2, 4, 0, 3)},
+        "robot_chosen_action_prob":{10: 0.6, 11: 0.95},
+        "goal_reward": 30,
+        "plants_reward": {(4, 5): [1,2,3,4], (0, 1): [10,11,12,13]},
+        "seed": 45,
+        "horizon": 70,
+    },
+    "problem_new1_version3": {
+        "Size":  (5, 6),
+        "Walls": {(1, 2), (1, 3), (3, 2), (3, 3)},
+        "Taps": {(2, 2): 12},
+        "Plants": {(0, 1): 2, (4, 5): 6},
+        "Robots": {10: (2, 1, 0, 6), 11: (2, 4, 0, 3)},
+        "robot_chosen_action_prob":{10: 0.6, 11: 0.95},
+        "goal_reward": 30,
+        "plants_reward": {(4, 5): [1,2,3,4], (0, 1): [10,11,12,13]},
+        "seed": 45,
+        "horizon": 30,
+    },
+    "problem_new2_version1": {
+        "Size":  (5, 6),
+        "Walls": {(0, 2), (0, 3), (2, 2), (2, 3)},
+        "Taps": {(1, 2): 10, (3, 3): 10},
+        "Plants": {(0, 0): 5, (4, 5): 5},
+        "Robots": {10: (1, 1, 0, 5), 11: (3, 4, 0, 4)},
+        "robot_chosen_action_prob":{10: 0.95, 11: 0.95},
+        "goal_reward": 18,
+        "plants_reward": {(0, 0): [5,7], (4, 5): [5,7]},
+        "seed": 45,
+        "horizon": 30,
+    },
+    "problem_new2_version2": {
+        "Size":  (5, 6),
+        "Walls": {(0, 2), (0, 3), (2, 2), (2, 3)},
+        "Taps": {(1, 2): 10, (3, 3): 10},
+        "Plants": {(0, 0): 5, (4, 5): 5},
+        "Robots": {10: (1, 1, 0, 5), 11: (3, 4, 0, 4)},
+        "robot_chosen_action_prob":{10: 0.95, 11: 0.95},
+        "goal_reward": 18,
+        "plants_reward": {(0, 0): [5,7], (4, 5): [5,7]},
+        "seed": 45,
+        "horizon": 70,
+    },
+    "problem_new2_version3": {
+        "Size":  (5, 6),
+        "Walls": {(0, 2), (0, 3), (2, 2), (2, 3)},
+        "Taps": {(1, 2): 10, (3, 3): 10},
+        "Plants": {(0, 0): 5, (4, 5): 5},
+        "Robots": {10: (1, 1, 0, 5), 11: (3, 4, 0, 4)},
+        "robot_chosen_action_prob":{10: 0.95, 11: 0.95},
+        "goal_reward": 20,
+        "plants_reward": {(0, 0): [5,7,9], (4, 5): [5,7]},
+        "seed": 45,
+        "horizon": 30,
+    },
+    "problem_new2_version4": {
+        "Size":  (5, 6),
+        "Walls": {(0, 2), (0, 3), (2, 2), (2, 3)},
+        "Taps": {(1, 2): 10, (3, 3): 10},
+        "Plants": {(0, 0): 5, (4, 5): 5},
+        "Robots": {10: (1, 1, 0, 5), 11: (3, 4, 0, 4)},
+        "robot_chosen_action_prob":{10: 0.7, 11: 0.95},
+        "goal_reward": 18,
+        "plants_reward": {(0, 0): [5,7], (4, 5): [5,7]},
+        "seed": 45,
+        "horizon": 40,
+    },
+    "problem_new3_version1": {
+        "Size":  (10, 4),
+        "Walls": {(0,1),(1, 1), (2, 1), (3, 1), (4, 1), (6, 1), (7, 1), (8, 1), (9, 1),(4,2), (4,3),(6,2), (6,3)},
+        "Taps": {(5, 3): 20},
+        "Plants": {(0, 0): 10, (9, 0): 10},
+        "Robots": {10: (2, 0, 0, 2), 11: (7, 0, 0, 20)},
+        "robot_chosen_action_prob":{10: 0.95, 11: 0.95},
+        "goal_reward": 9,
+        "plants_reward": {(0, 0): [1,3], (9, 0): [1,3]},
+        "seed": 45,
+        "horizon": 30,
+    },
+     "problem_new3_version2": {
+        "Size":  (10, 4),
+        "Walls": {(0,1),(1, 1), (2, 1), (3, 1), (4, 1), (6, 1), (7, 1), (8, 1), (9, 1),(4,2), (4,3),(6,2), (6,3)},
+        "Taps": {(5, 3): 20},
+        "Plants": {(0, 0): 10, (9, 0): 10},
+        "Robots": {10: (2, 0, 0, 2), 11: (7, 0, 0, 20)},
+        "robot_chosen_action_prob":{10: 0.95, 11: 0.8},
+        "goal_reward": 9,
+        "plants_reward": {(0, 0): [1,3], (9, 0): [1,3]},
+        "seed": 45,
+        "horizon": 50,
+    },
+    "problem_new3_version3": {
+        "Size":  (10, 4),
+        "Walls": {(0,1),(1, 1), (2, 1), (3, 1), (4, 1), (6, 1), (7, 1), (8, 1), (9, 1),(4,2), (4,3),(6,2), (6,3)},
+        "Taps": {(5, 3): 20},
+        "Plants": {(0, 0): 5, (9, 0): 5},
+        "Robots": {10: (2, 0, 0, 2), 11: (7, 0, 0, 20)},
+        "robot_chosen_action_prob":{10: 0.95, 11: 0.0001},
+        "goal_reward": 9,
+        "plants_reward": {(0, 0): [1,3], (9, 0): [1,3]},
+        "seed": 45,
+        "horizon": 70,
+    },
+    "problem_new4_version1": {
+        "Size":  (10, 10),
+        "Walls": set(),
+        "Taps": {(8, 8): 24},
+        "Plants": {(0, 0): 5, (0, 9): 5, (9, 0): 5, (9, 9): 5},
+        "Robots": {10: (8, 9, 0, 5)},
+        "robot_chosen_action_prob":{10: 0.95},
+        "goal_reward": 9,
+        "plants_reward": {(0, 0): [1,3], (9, 0): [1,3], (9, 9): [1,3], (0, 9): [1,3]}, # Fixed missing/dup key
+        "seed": 45,
+        "horizon": 70,
+    },
+    "problem_new4_version2": {
+        "Size":  (10, 10),
+        "Walls": set(),
+        "Taps": {(8, 8): 24},
+        "Plants": {(0, 0): 5, (0, 9): 5, (9, 0): 5, (9, 9): 5},
+        "Robots": {10: (8, 9, 0, 5)},
+        "robot_chosen_action_prob":{10: 0.85},
+        "goal_reward": 9,
+        "plants_reward": {(0, 0): [1,3], (9, 0): [1,3], (9, 9): [1,3], (0, 9): [1,3]},
+        "seed": 45,
+        "horizon": 40,
+    }
+}
+
+class LevelEditor:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Assignment 2 Problem Viewer & Generator")
+
+        # --- Defaults ---
+        self.rows = 5
+        self.cols = 6
+        self.cell_size = 50
+        
+        # Data storage
+        self.grid_objects = {} 
+        
+        # --- UI Layout ---
+        
+        # Left Control Panel
+        self.controls = tk.Frame(root, width=350, padx=10, pady=10)
+        self.controls.pack(side=tk.LEFT, fill=tk.Y)
+
+        # Right Canvas
+        self.canvas_frame = tk.Frame(root)
+        self.canvas_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
+        
+        self.canvas = tk.Canvas(self.canvas_frame, bg="white", width=600, height=600)
+        self.canvas.pack(fill=tk.BOTH, expand=True)
+        self.canvas.bind("<Button-1>", self.on_canvas_click)
+
+        # --- LOAD PRESET SECTION ---
+        frame_load = tk.LabelFrame(self.controls, text="Load Preset Problem", padx=5, pady=5, fg="blue", font=("Arial", 10, "bold"))
+        frame_load.pack(fill="x", pady=(0, 10))
+
+        self.problem_var = tk.StringVar()
+        self.combo_problems = ttk.Combobox(frame_load, textvariable=self.problem_var, state="readonly")
+        self.combo_problems['values'] = list(PRESET_PROBLEMS.keys())
+        self.combo_problems.current(0)
+        self.combo_problems.pack(side=tk.LEFT, fill="x", expand=True, padx=5)
+        
+        tk.Button(frame_load, text="LOAD", command=self.load_preset, bg="#eeeeff").pack(side=tk.LEFT)
+
+
+        # --- Control Widgets ---
+
+        # 1. Grid Size
+        frame_size = tk.LabelFrame(self.controls, text="Grid Size", padx=5, pady=5)
+        frame_size.pack(fill="x", pady=5)
+        
+        tk.Label(frame_size, text="Rows:").grid(row=0, column=0)
+        self.entry_rows = tk.Entry(frame_size, width=5)
+        self.entry_rows.insert(0, "5")
+        self.entry_rows.grid(row=0, column=1)
+
+        tk.Label(frame_size, text="Cols:").grid(row=0, column=2)
+        self.entry_cols = tk.Entry(frame_size, width=5)
+        self.entry_cols.insert(0, "6")
+        self.entry_cols.grid(row=0, column=3)
+        
+        tk.Button(frame_size, text="Resize/Clear", command=self.reset_grid_from_ui).grid(row=0, column=4, padx=5)
+
+        # 2. Global Settings
+        frame_global = tk.LabelFrame(self.controls, text="Global Config", padx=5, pady=5)
+        frame_global.pack(fill="x", pady=5)
+
+        tk.Label(frame_global, text="Goal Reward:").grid(row=0, column=0)
+        self.entry_goal_rew = tk.Entry(frame_global, width=8)
+        self.entry_goal_rew.insert(0, "30")
+        self.entry_goal_rew.grid(row=0, column=1)
+
+        tk.Label(frame_global, text="Horizon:").grid(row=1, column=0)
+        self.entry_horizon = tk.Entry(frame_global, width=8)
+        self.entry_horizon.insert(0, "30")
+        self.entry_horizon.grid(row=1, column=1)
+
+        tk.Label(frame_global, text="Seed:").grid(row=2, column=0)
+        self.entry_seed = tk.Entry(frame_global, width=8)
+        self.entry_seed.insert(0, "45")
+        self.entry_seed.grid(row=2, column=1)
+
+        # 3. Tools
+        frame_tools = tk.LabelFrame(self.controls, text="Tools (Select & Click)", padx=5, pady=5)
+        frame_tools.pack(fill="x", pady=5)
+
+        self.tool_var = tk.StringVar(value="wall")
+
+        # Tool: Eraser
+        tk.Radiobutton(frame_tools, text="Eraser", variable=self.tool_var, value="erase").pack(anchor="w")
+
+        # Tool: Wall
+        tk.Radiobutton(frame_tools, text="Wall (Black)", variable=self.tool_var, value="wall").pack(anchor="w")
+
+        # Tool: Tap
+        tk.Radiobutton(frame_tools, text="Tap (Blue)", variable=self.tool_var, value="tap").pack(anchor="w")
+        self.lbl_tap = tk.Label(frame_tools, text="   Amount:", fg="blue")
+        self.lbl_tap.pack(anchor="w")
+        self.entry_tap_amt = tk.Entry(frame_tools, width=10)
+        self.entry_tap_amt.insert(0, "10")
+        self.entry_tap_amt.pack(anchor="w", padx=20)
+
+        # Tool: Plant
+        tk.Radiobutton(frame_tools, text="Plant (Green)", variable=self.tool_var, value="plant").pack(anchor="w")
+        tk.Label(frame_tools, text="   Demand:", fg="green").pack(anchor="w")
+        self.entry_plant_demand = tk.Entry(frame_tools, width=10)
+        self.entry_plant_demand.insert(0, "5")
+        self.entry_plant_demand.pack(anchor="w", padx=20)
+        tk.Label(frame_tools, text="   Rewards (csv):", fg="green").pack(anchor="w")
+        self.entry_plant_rewards = tk.Entry(frame_tools, width=15)
+        self.entry_plant_rewards.insert(0, "1,2,3,4")
+        self.entry_plant_rewards.pack(anchor="w", padx=20)
+
+        # Tool: Robot
+        tk.Radiobutton(frame_tools, text="Robot (Red)", variable=self.tool_var, value="robot").pack(anchor="w")
+        tk.Label(frame_tools, text="   ID:", fg="red").pack(anchor="w")
+        self.entry_rob_id = tk.Entry(frame_tools, width=10)
+        self.entry_rob_id.insert(0, "10")
+        self.entry_rob_id.pack(anchor="w", padx=20)
+        tk.Label(frame_tools, text="   Start Water:", fg="red").pack(anchor="w")
+        self.entry_rob_water = tk.Entry(frame_tools, width=10)
+        self.entry_rob_water.insert(0, "0")
+        self.entry_rob_water.pack(anchor="w", padx=20)
+        tk.Label(frame_tools, text="   Capacity:", fg="red").pack(anchor="w")
+        self.entry_rob_cap = tk.Entry(frame_tools, width=10)
+        self.entry_rob_cap.insert(0, "2")
+        self.entry_rob_cap.pack(anchor="w", padx=20)
+        tk.Label(frame_tools, text="   Success Prob:", fg="red").pack(anchor="w")
+        self.entry_rob_prob = tk.Entry(frame_tools, width=10)
+        self.entry_rob_prob.insert(0, "0.95")
+        self.entry_rob_prob.pack(anchor="w", padx=20)
+
+        # 4. Generate Button
+        tk.Button(self.controls, text="GENERATE CODE", bg="#ddffdd", font=("Arial", 12, "bold"), command=self.generate_code).pack(pady=20, fill="x")
+
+        # 5. Output Text
+        self.txt_output = tk.Text(self.controls, height=10, width=40, font=("Consolas", 9))
+        self.txt_output.pack(fill="x")
+
+        # Initialize
+        self.load_preset()
+
+    def load_preset(self):
+        name = self.problem_var.get()
+        if not name: return
+        
+        data = PRESET_PROBLEMS.get(name)
+        if not data: return
+
+        # 1. Update Size
+        r, c = data["Size"]
+        self.entry_rows.delete(0, tk.END); self.entry_rows.insert(0, str(r))
+        self.entry_cols.delete(0, tk.END); self.entry_cols.insert(0, str(c))
+        self.rows = r
+        self.cols = c
+
+        # 2. Update Globals
+        self.entry_goal_rew.delete(0, tk.END); self.entry_goal_rew.insert(0, str(data.get("goal_reward", 30)))
+        self.entry_horizon.delete(0, tk.END); self.entry_horizon.insert(0, str(data.get("horizon", 30)))
+        self.entry_seed.delete(0, tk.END); self.entry_seed.insert(0, str(data.get("seed", 45)))
+
+        # 3. Populate Objects
+        self.grid_objects = {}
+
+        # Walls
+        for w in data.get("Walls", []):
+            self.grid_objects[w] = {'type': 'wall'}
+
+        # Taps
+        for pos, amt in data.get("Taps", {}).items():
+            self.grid_objects[pos] = {'type': 'tap', 'amount': amt}
+
+        # Plants (merge demand and rewards)
+        plant_rewards = data.get("plants_reward", {})
+        for pos, demand in data.get("Plants", {}).items():
+            rew = plant_rewards.get(pos, [])
+            self.grid_objects[pos] = {'type': 'plant', 'demand': demand, 'rewards': rew}
+
+        # Robots (merge location and probs)
+        rob_probs = data.get("robot_chosen_action_prob", {})
+        for rid, specs in data.get("Robots", {}).items():
+            # specs = (row, col, water, capacity)
+            rr, cc, wat, cap = specs
+            prob = rob_probs.get(rid, 1.0)
+            self.grid_objects[(rr, cc)] = {
+                'type': 'robot',
+                'id': rid,
+                'water': wat,
+                'cap': cap,
+                'prob': prob
+            }
+
+        self.draw_grid()
+        self.txt_output.delete("1.0", tk.END)
+        self.txt_output.insert(tk.END, f"# Loaded {name}\n# You can edit visually and generate code.")
+
+    def reset_grid_from_ui(self):
+        try:
+            self.rows = int(self.entry_rows.get())
+            self.cols = int(self.entry_cols.get())
+        except ValueError:
+            return
+        self.grid_objects = {}
+        self.draw_grid()
+
+    def draw_grid(self):
+        self.canvas.delete("all")
+        
+        # Draw cells
+        for r in range(self.rows):
+            for c in range(self.cols):
+                x1 = c * self.cell_size
+                y1 = r * self.cell_size
+                x2 = x1 + self.cell_size
+                y2 = y1 + self.cell_size
+                
+                # Default background
+                fill_color = "white"
+                outline_color = "#ccc"
+                
+                # Check for objects
+                obj = self.grid_objects.get((r, c))
+                text_id = ""
+                sub_text = ""
+
+                if obj:
+                    t = obj['type']
+                    if t == 'wall':
+                        fill_color = "#444" # Dark Grey
+                    elif t == 'tap':
+                        fill_color = "#aaf" # Light Blue
+                        text_id = "T"
+                        sub_text = str(obj['amount'])
+                    elif t == 'plant':
+                        fill_color = "#afa" # Light Green
+                        text_id = "P"
+                        sub_text = f"{obj['demand']} | {obj['rewards']}"
+                    elif t == 'robot':
+                        fill_color = "#faa" # Light Red
+                        text_id = f"R{obj['id']}"
+                        sub_text = f"W:{obj['water']}/C:{obj['cap']}"
+
+                self.canvas.create_rectangle(x1, y1, x2, y2, fill=fill_color, outline=outline_color)
+                
+                # Draw coordinates (small)
+                self.canvas.create_text(x1+10, y1+10, text=f"{r},{c}", fill="#bbb", font=("Arial", 8))
+
+                # Draw Object Info
+                if text_id:
+                    self.canvas.create_text(x1+self.cell_size/2, y1+self.cell_size/2 - 5, text=text_id, font=("Arial", 12, "bold"))
+                if sub_text:
+                    # make subtext smaller
+                    self.canvas.create_text(x1+self.cell_size/2, y1+self.cell_size/2 + 15, text=sub_text, font=("Arial", 7))
+
+    def on_canvas_click(self, event):
+        col = event.x // self.cell_size
+        row = event.y // self.cell_size
+
+        if 0 <= row < self.rows and 0 <= col < self.cols:
+            self.apply_tool(row, col)
+            self.draw_grid()
+
+    def apply_tool(self, r, c):
+        tool = self.tool_var.get()
+        
+        if tool == "erase":
+            if (r, c) in self.grid_objects:
+                del self.grid_objects[(r, c)]
+            return
+
+        try:
+            if tool == "wall":
+                self.grid_objects[(r, c)] = {'type': 'wall'}
+            
+            elif tool == "tap":
+                amt = int(self.entry_tap_amt.get())
+                self.grid_objects[(r, c)] = {'type': 'tap', 'amount': amt}
+            
+            elif tool == "plant":
+                dem = int(self.entry_plant_demand.get())
+                rew_str = self.entry_plant_rewards.get()
+                rew_list = [int(x.strip()) for x in rew_str.split(',') if x.strip()]
+                self.grid_objects[(r, c)] = {'type': 'plant', 'demand': dem, 'rewards': rew_list}
+            
+            elif tool == "robot":
+                rid = int(self.entry_rob_id.get())
+                water = int(self.entry_rob_water.get())
+                cap = int(self.entry_rob_cap.get())
+                prob = float(self.entry_rob_prob.get())
+                self.grid_objects[(r, c)] = {
+                    'type': 'robot', 
+                    'id': rid, 
+                    'water': water, 
+                    'cap': cap, 
+                    'prob': prob
+                }
+        except ValueError:
+            messagebox.showerror("Error", "Invalid number format in tool settings.")
+
+    def generate_code(self):
+        walls = []
+        taps = {}
+        plants = {}
+        plants_rew = {}
+        robots = {}
+        robot_probs = {}
+
+        for (r, c), obj in self.grid_objects.items():
+            t = obj['type']
+            if t == 'wall':
+                walls.append((r, c))
+            elif t == 'tap':
+                taps[(r, c)] = obj['amount']
+            elif t == 'plant':
+                plants[(r, c)] = obj['demand']
+                plants_rew[(r, c)] = obj['rewards']
+            elif t == 'robot':
+                robots[obj['id']] = (r, c, obj['water'], obj['cap'])
+                robot_probs[obj['id']] = obj['prob']
+
+        walls_str = "{" + ", ".join([str(w) for w in walls]) + "}"
+        if not walls: walls_str = "set()"
+
+        code = "problem_custom = {\n"
+        code += f'    "Size":   ({self.rows}, {self.cols}),\n'
+        code += f'    "Walls":  {walls_str},\n'
+        code += f'    "Taps":   {taps},\n'
+        code += f'    "Plants": {plants},\n'
+        code += f'    "Robots": {robots},\n'
+        code += f'    "robot_chosen_action_prob": {robot_probs},\n'
+        code += f'    "goal_reward": {self.entry_goal_rew.get()},\n'
+        code += f'    "plants_reward": {plants_rew},\n'
+        code += f'    "seed": {self.entry_seed.get()},\n'
+        code += f'    "horizon": {self.entry_horizon.get()},\n'
+        code += "}"
+
+        self.txt_output.delete("1.0", tk.END)
+        self.txt_output.insert(tk.END, code)
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = LevelEditor(root)
+    root.mainloop()
