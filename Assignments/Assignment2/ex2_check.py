@@ -500,52 +500,39 @@ problem_new4_version2 = {
 def main():
     debug_mode = False
     n_runs = 30
-    # Fix horizon
-    total_reward = 0.0
-    total_time = 0
     problems = [
-    problem_pdf,
-    problem_pdf2,
-    problem_pdf3,
-    problem_new1_version1,
-    problem_new1_version2,
-    problem_new1_version3,
-    problem_new2_version1,
-    problem_new2_version2,
-    problem_new2_version3,
-    problem_new2_version4,
-    problem_new3_version1,
-    problem_new3_version2,
-    problem_new3_version3,
-    problem_new4_version1,
-    problem_new4_version2,
-]
-    for problem in problems:
+        ("problem_pdf", problem_pdf),
+        ("problem_pdf2", problem_pdf2),
+        ("problem_pdf3", problem_pdf3),
+        ("problem_new1_version1", problem_new1_version1),
+        ("problem_new1_version2", problem_new1_version2),
+        ("problem_new1_version3", problem_new1_version3),
+        ("problem_new2_version1", problem_new2_version1),
+        ("problem_new2_version2", problem_new2_version2),
+        ("problem_new2_version3", problem_new2_version3),
+        ("problem_new2_version4", problem_new2_version4),
+        ("problem_new3_version1", problem_new3_version1),
+        ("problem_new3_version2", problem_new3_version2),
+        ("problem_new3_version3", problem_new3_version3),
+        ("problem_new4_version1", problem_new4_version1),
+        ("problem_new4_version2", problem_new4_version2),
+    ]
+    for prob_name, problem in problems:
+        total_reward = 0.0
+        total_time = 0
         for seed in range(n_runs):
-            # Set a different random seed each run
             problem["seed"] = seed
-
-            # Create a fresh game for this run
             game = ext_plant.create_pressure_plate_game((problem, debug_mode))
-
-             # Start timer
             start_time = time.time()
-
-            # Solve and accumulate reward
             run_reward = solve(game)
             total_reward += run_reward
-
-            # Stop timer and accumulate
-            end_time = time.time()
-            duration = end_time - start_time
+            duration = time.time() - start_time
             total_time += duration
-
-            print(f"Run {seed}: reward = {run_reward}, time = {duration:.4f}s")
-
         avg_reward = total_reward / n_runs
         avg_time = total_time / n_runs
-        print(f"\nAverage reward over {n_runs} runs: {avg_reward}")
-        print(f"Average time over {n_runs} runs: {avg_time:.4f}s")
+        print(f"\n{prob_name}: Average reward over {n_runs} runs: {avg_reward}")
+        print(f"{prob_name}: Average time over {n_runs} runs: {avg_time:.4f}s")
+
 
 
 

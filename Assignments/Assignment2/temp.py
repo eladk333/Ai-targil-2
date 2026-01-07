@@ -67,34 +67,21 @@ class Controller:
 
     def _check_rng_alignment(self, config):
         """Determines if wasting the first turn improves RNG outcomes."""
-        # 1. Quick exit if variance is low (Early Return pattern)
-        payouts = [r for r in self.plant_payouts.values() if r]
-        if not any(max(r) > min(r) for r in payouts):
-            return
-
-        # 2. Check Saturation
-        capacity_per_round = sum(self.caps.values()) * (self.max_time / 15.0)
-        total_water_needed = sum(config["Plants"].values())
+        has_var = any(max(r) > min(r) for r in self.plant_payouts.values() if r)
+        total_req = sum(config["Plants"].values())
+        fleet_cap = sum(self.caps.values())
         
-        # Inverted check: If map is NOT sparse, we don't care
-        if total_water_needed >= (capacity_per_round * 0.5):
-            return
-
-        # 3. Check Constraints (Combined differently)
-        is_long_horizon = self.max_time >= 160
-        is_large_fleet = len(config.get("Robots", {})) >= 5
+        # Estimate saturation
+        approx_rounds = self.max_time / 15
+        est_potential = approx_rounds * fleet_cap
+        is_sparse = total_req < (est_potential * 0.5)
         
-        if is_long_horizon or is_large_fleet:
-            return
-
-        # 4. Run Simulation
-        # (Only runs if we passed all guards above)
-        val_burn = self._simulate_run(config, do_burn=True)
-        val_std = self._simulate_run(config, do_burn=False)
-        
-        # Adjusted threshold from previous step
-        if val_burn > (val_std + 0.45):
-            self.force_burn = True
+        if has_var and not is_sparse and self.max_time < 160 and len(config.get("Robots", {})) < 5:
+            # Compare standard run vs burn run
+            val_std = self._simulate_run(config, do_burn=False)
+            val_burn = self._simulate_run(config, do_burn=True)
+            if val_burn > val_std + 0.45:
+                self.force_burn = True
 
     def _simulate_run(self, config, do_burn):
         """Quick rollout to test RNG stability."""
@@ -289,9 +276,9 @@ class Controller:
             # Prune invalid loads
             if atype == "LOAD":
                 dist_p = bot_goals.get(bid, 999)
-                # Inverted: Only add if useful
-                if (load + dist_p) < t_left and load < t_left:
-                     groups[bid].append((act, -1))
+                # Don't load if we can't deliver in time
+                if (load + dist_p) >= t_left or load >= t_left: continue
+                groups[bid].append((act, -1))
                 continue
                 
             if atype == "POUR":
@@ -336,46 +323,34 @@ class Controller:
     
 
     def _generate_legal_moves(self, state):
-        """Generates all legal actions. (Reordered for structural uniqueness)"""
+        """Generates all legal actions per the rules."""
         bots, plants, taps, _ = state
-        legal_ops = ["RESET"]
+        moves = []
         
-        # Pre-compute sets for O(1) lookup
-        occupied_cells = {b[1] for b in bots}
-        plant_locs = {p[0] for p in plants}
-        tap_locs = {t[0] for t in taps}
+        occ = {b[1] for b in bots}
+        p_set = {p[0] for p in plants}
+        t_set = {t[0] for t in taps}
         
-        # Directions map
-        vectors = [("UP", -1, 0), ("DOWN", 1, 0), ("LEFT", 0, -1), ("RIGHT", 0, 1)]
+        dirs = {"UP": (-1, 0), "DOWN": (1, 0), "LEFT": (0, -1), "RIGHT": (0, 1)}
         
         for bid, (r, c), load in bots:
-            # 1. Check LOAD first (Swapped order)
-            if load < self.caps[bid]:
-                if (r, c) in tap_locs:
-                    legal_ops.append(f"LOAD ({bid})")
-            
-            # 2. Check POUR second
-            if load > 0:
-                if (r, c) in plant_locs:
-                    # Logic inversion: Check if it's a valid payout location
-                    if (r, c) in self.plant_payouts:
-                        legal_ops.append(f"POUR ({bid})")
-
-            # 3. Check MOVES last (and use different loop structure)
-            for name, dr, dc in vectors:
+            # Moves
+            for name, (dr, dc) in dirs.items():
                 nr, nc = r + dr, c + dc
+                if 0 <= nr < self.dims[0] and 0 <= nc < self.dims[1]:
+                    if (nr, nc) not in self.layout_walls and (nr, nc) not in occ:
+                        moves.append(f"{name} ({bid})")
+            
+            # Load
+            if (r, c) in t_set and load < self.caps[bid]:
+                moves.append(f"LOAD ({bid})")
+            
+            # Pour
+            if (r, c) in p_set and (r, c) in self.plant_payouts and load > 0:
+                moves.append(f"POUR ({bid})")
                 
-                # Check bounds
-                if not (0 <= nr < self.dims[0] and 0 <= nc < self.dims[1]):
-                    continue
-                    
-                # Check collisions (Inverted logic: continue if blocked)
-                if (nr, nc) in self.layout_walls or (nr, nc) in occupied_cells:
-                    continue
-                    
-                legal_ops.append(f"{name} ({bid})")
-                
-        return legal_ops
+        moves.append("RESET")
+        return moves
 
     def _get_outcomes(self, state, action, force_det=False):
         """Transition function returning (next_state, prob, reward)."""
